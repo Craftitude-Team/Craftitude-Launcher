@@ -30,7 +30,12 @@ namespace Craftitude
             this._path = Path.GetFullPath(folderPath);
         }
 
-        public RepositoryCache GetRepositoryCache(string cacheId)
+        public RepositoryCache GetInstalledPackagesCache()
+        {
+            return GetRepositoryCache("installation");
+        }
+
+        private RepositoryCache GetRepositoryCache(string cacheId)
         {
             return new RepositoryCache(this, cacheId);
         }

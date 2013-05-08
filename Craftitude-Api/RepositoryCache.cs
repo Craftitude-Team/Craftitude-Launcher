@@ -30,7 +30,6 @@ namespace Craftitude
             if (!Directory.Exists(_db.DataDirectory))
                 Directory.CreateDirectory(_db.DataDirectory);
             _db.Initialize();
-            _db.Conventions.RegisterIdConvention<InstalledPackage>((dbname, commands, user) => "installed/" + user.Name);
         }
 
         public void Dispose()

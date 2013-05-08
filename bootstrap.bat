@@ -21,12 +21,11 @@ call check-svn
 if %errorlevel% neq 0 goto E_EXIT
 call check-git                   
 if %errorlevel% neq 0 goto E_EXIT
-call check-hg     
-if %errorlevel% neq 0 goto E_EXIT 
+::call check-hg     
+::if %errorlevel% neq 0 goto E_EXIT 
 
 call init-svn https://yaml.svn.codeplex.com/svn/Main/ dependencies/yaml
 call init-git https://github.com/chkn/AluminumLua.git dependencies/aluminumlua
-call init-hg https://code.google.com/p/csharp-sqlite/ dependencies/csharp-sqlite
 call init-nuget
 
 xecho /a:%col_ok% Finished.

@@ -56,6 +56,14 @@ namespace Craftitude
             }
         }
 
+        public IEnumerable<Package> GetAllPackages()
+        {
+            using (var session = _db.OpenSession())
+            {
+                return session.Query<Package>().ToList<Package>();
+            }
+        }
+
         public Package[] GetPackages(params string[] IDs)
         {
             using (var session = _db.OpenSession())

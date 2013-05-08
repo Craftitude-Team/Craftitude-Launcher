@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Craftitude
 {
-    abstract class VersionMetadata : Metadata
+    public abstract class VersionMetadata : Metadata
     {
         public string Date
         {

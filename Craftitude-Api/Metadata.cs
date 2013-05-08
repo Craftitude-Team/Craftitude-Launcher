@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Craftitude
 {
-    abstract class Metadata
+    public abstract class Metadata
     {
         public string Name
         {

@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Craftitude-PackageManager", "Craftitude-PackageManager\Craftitude-PackageManager.csproj", "{ED48E20A-AE49-4A93-8E04-16919843283C}"
@@ -22,7 +22,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Craftitude-Api", "Craftitud
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependencies", "Dependencies", "{852A68CC-934C-4AA5-B535-E4084355048E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AluminumLua.Net40", "dependencies\aluminiumlua\vs2010\AluminumLua.Net40\AluminumLua.Net40.csproj", "{BAFD1B0D-16E3-4B17-BCD7-53C5FE3B6AB7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AluminumLua.Net40", "dependencies\aluminumlua\vs2010\AluminumLua.Net40\AluminumLua.Net40.csproj", "{BAFD1B0D-16E3-4B17-BCD7-53C5FE3B6AB7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

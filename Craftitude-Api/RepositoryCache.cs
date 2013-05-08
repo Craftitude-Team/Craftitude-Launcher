@@ -38,11 +38,37 @@ namespace Craftitude
                 _db.Dispose();
         }
 
+        public void DeletePackage(string id, Package package)
+        {
+            using (var session = _db.OpenSession())
+            {
+                session.Delete(package);
+                session.SaveChanges();
+            }
+        }
+
         public void SavePackage(string id, Package package)
         {
             using (var session = _db.OpenSession())
             {
                 session.Store(package, id);
+                session.SaveChanges();
+            }
+        }
+
+        public Package[] GetPackages(params string[] IDs)
+        {
+            using (var session = _db.OpenSession())
+            {
+                return session.Load<Package>(IDs);
+            }
+        }
+
+        public Package GetPackage(string ID)
+        {
+            using (var session = _db.OpenSession())
+            {
+                return session.Load<Package>(ID);
             }
         }
     }

@@ -1,0 +1,34 @@
+﻿<Window x:Class="Craftitude_Launcher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow"
+        Foreground="White" Background="Black"
+        Height="347.942" Width="409.772">
+    <StackPanel Name="MainPanel">
+        <Image Name="Logo" DockPanel.Dock="Left" Height="200" Source="pack://siteoforigin:,,,/Resources/logo.png"/>
+
+        <!-- username -->
+        <ContentControl Margin="3">
+            <StackPanel Orientation="Horizontal">
+                <Label Width="100" Content="Username:" />
+                <TextBox Margin="3" Name="txtUser" Width="300" HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </ContentControl>
+
+        <!-- password -->
+        <ContentControl Margin="3">
+            <StackPanel Orientation="Horizontal">
+                <Label Width="100" Content="Password:" />
+                <PasswordBox Margin="3" Name="txtPass" Width="300" HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </ContentControl>
+        
+        <!-- buttons -->
+        <ContentControl Margin="3">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Margin="3" Padding="5" FontWeight="Bold">Login</Button>
+                <Button Margin="3" Padding="5">Quit</Button>
+            </StackPanel>
+        </ContentControl>
+    </StackPanel>
+</Window>

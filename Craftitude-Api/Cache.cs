@@ -1,0 +1,81 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Security.Cryptography;
+using System.IO;
+using YaTools.Yaml;
+using Raven;
+using Raven.Client;
+using Raven.Client.Document;
+using Raven.Client.Embedded;
+using Raven.Storage;
+using Raven.Database;
+
+namespace Craftitude
+{
+    public class Cache
+    {
+        // TODO: Add status event(s)
+
+        internal string _path;
+        internal Client _client;
+
+        internal Cache(Client client, string folderPath)
+        {
+            this._client = client;
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
+            this._path = Path.GetFullPath(folderPath);
+        }
+
+        public RepositoryCache GetRepositoryCache(string cacheId)
+        {
+            return new RepositoryCache(this, cacheId);
+        }
+
+        public RepositoryCache GetRepositoryCache(Uri url)
+        {
+            return GetRepositoryCache(GenerateCacheId(url.AbsoluteUri));
+        }
+
+        private static string GenerateCacheId(string url)
+        {
+            return BitConverter.ToString(SHA512.Create().ComputeHash(Encoding.UTF8.GetBytes(url))).Replace("-", "\\");
+        }
+    }
+
+    public class RepositoryCache : IDisposable
+    {
+        internal EmbeddableDocumentStore _db;
+        internal Cache _cache;
+
+        internal RepositoryCache(Cache cache, string cacheId)
+        {
+            _cache = cache;
+            _db = new EmbeddableDocumentStore()
+            {
+                DataDirectory = Path.Combine(_cache._path, cacheId)
+            };
+            if (!Directory.Exists(_db.DataDirectory))
+                Directory.CreateDirectory(_db.DataDirectory);
+            _db.Initialize();
+            _db.Conventions.RegisterIdConvention<InstalledPackage>((dbname, commands, user) => "installed/" + user.Name);
+        }
+
+        public void Dispose()
+        {
+            if (!_db.WasDisposed)
+                _db.Dispose();
+        }
+
+        public void SavePackage(string id, Package package)
+        {
+            using (var session = _db.OpenSession())
+            {
+                session.Store(package, id);
+            }
+        }
+    }
+}

@@ -107,4 +107,7 @@ Backup*/
 UpgradeLog*.XML
 
 # Packages from NuGet
+/packages/
+
+# Bootstrap-downloaded 3rd-party code
 /dependencies/

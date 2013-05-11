@@ -40,7 +40,7 @@ namespace Craftitude
             return new RepositoryCache(this, cacheId);
         }
 
-        public RepositoryCache GetRepositoryCache(Uri url)
+        internal RepositoryCache GetRepositoryCache(Uri url)
         {
             return GetRepositoryCache(GenerateCacheId(url.AbsoluteUri));
         }

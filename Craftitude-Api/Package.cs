@@ -108,6 +108,8 @@ namespace Craftitude
 
         public void Move(string source, string target)
         {
+            var f = new FileInfo(Path.Combine(_basePath.ToString(), source));
+            f.MoveTo(target);
         }
     }
 }

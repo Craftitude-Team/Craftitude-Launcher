@@ -81,38 +81,6 @@ namespace Craftitude
             return newOperationIndex;
         }
 
-        public void UpdateCache()
-        {
-            var thisOperation = new CollectiveOperation(this) { Text = Properties.Resources.FetchingUpdatesFromRepositories };
-
-            var operationAssignments = new Dictionary<CollectiveOperation, Repository>();
-            foreach (var repo in Repositories)
-            {
-                var o = new CollectiveOperation(this);
-                o.Text = repo.Url;
-                o.Suboperations.Add(new ProgressingOperation(this) { Text = Properties.Resources.DownloadingRepositoryUpdates });   // 0: Downloading package list
-                o.Suboperations.Add(new ProgressingOperation(this) { Text = Properties.Resources.MergingRepositoryUpdates });       // 1: Merging package list
-                thisOperation.Suboperations.Add(o);
-                operationAssignments.Add(o, repo);
-            }
-
-            foreach (var operation in operationAssignments.Keys)
-            {
-                string packagesYml = string.Empty;
-                var repository = operationAssignments[operation];
-                using (WebClient wc = new WebClient())
-                {
-                    wc.Disposed += (s, e) => { ((ProgressingOperation)operation.Suboperations[0]).Progress = 1; };
-                    wc.DownloadProgressChanged += (s, e) => { ((ProgressingOperation)operation.Suboperations[0]).Progress = e.ProgressPercentage / 100; };
-                    packagesYml = wc.DownloadString(repository.GetPackagesYmlUrl());
-                }
-
-                var packageList = YamlLanguage.StringTo(packagesYml);
-
-                
-            }
-        }
-
         public bool IsInstalled(string packageID)
         {
             return Cache.GetInstalledPackagesCache().GetPackage(packageID) != null;

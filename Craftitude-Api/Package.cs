@@ -13,27 +13,20 @@ using Raven.Imports.Newtonsoft.Json;
 
 namespace Craftitude
 {
-    public class Package : Metadata
+    public class RepositoryPackage : Raven.Package
     {
         [JsonIgnore]
         internal RepositoryCache _repositoryCache { get; set; }
     }
 
-    public class RepositoryPackage : Package
+    public class InstalledPackage : Raven.InstalledPackage
     {
-
-    }
-
-    public class InstalledPackage : Package
-    {
-        public string InstalledVersionID { get; set; }
-        public string InstallScript { get; set; }
-        public string UninstallScript { get; set; }
-        public string StartupScript { get; set; }
+        [JsonIgnore]
+        internal RepositoryCache _repositoryCache { get; set; }
 
         private void LuaScript(TextReader script, Dictionary<string, object> additionalVariables = null)
         {
-            var instructionHelper = new InstructionHelper(this);
+            var instructionHelper = new InstructionHelper(_repositoryCache._cache._client);
             var context = new LuaContext();
             context.AddBasicLibrary();
 
@@ -85,13 +78,13 @@ namespace Craftitude
 
     internal class InstructionHelper
     {
-        internal InstructionHelper(Package package)
+        internal InstructionHelper(Client mainClient)
         {
-            this._package = package;
-            this._basePath = new DirectoryInfo(_package._repositoryCache._cache._client.BasePath);
+            this._client = mainClient;
+            this._basePath = new DirectoryInfo(_client.BasePath);
         }
 
-        internal Package _package;
+        internal Client _client;
         internal DirectoryInfo _basePath;
 
         public void DeleteFile(string targetfile)
@@ -111,5 +104,7 @@ namespace Craftitude
             var f = new FileInfo(Path.Combine(_basePath.ToString(), source));
             f.MoveTo(target);
         }
+
+        // TODO: Complete instruction set
     }
 }

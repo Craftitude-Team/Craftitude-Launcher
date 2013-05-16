@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
-namespace Craftitude
+namespace Craftitude.Raven
 {
-    public abstract class Metadata
+    public class Package
     {
+        // Metadata
         public string Name
         {
             get;
@@ -42,10 +43,17 @@ namespace Craftitude
             get;
             protected set;
         }
-        public Dictionary<string, VersionMetadata> Versions
+
+        // Version tree
+        public PackageVersion[] Versions
         {
             get;
             protected set;
         }
+
+        // Scripts
+        public string InstallScript { get; set; }
+        public string UninstallScript { get; set; }
+        public string StartupScript { get; set; }
     }
 }

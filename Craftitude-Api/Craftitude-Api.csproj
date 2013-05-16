@@ -66,9 +66,6 @@
     <Compile Include="Cache.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="License.cs" />
-    <Compile Include="Raven\InstalledPackage.cs" />
-    <Compile Include="Raven\Package.cs" />
-    <Compile Include="Raven\PackageVersion.cs" />
     <Compile Include="PrioritizedList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Package.cs" />

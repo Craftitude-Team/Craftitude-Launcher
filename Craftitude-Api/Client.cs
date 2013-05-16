@@ -8,34 +8,50 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
 using YaTools.Yaml;
+using Raven;
+using Raven.Client;
+using Raven.Client.Connection;
+using Raven.Client.Document;
+using Raven.Client.Embedded;
+using Raven.Client.Linq;
+using Raven.Database;
+using Raven.Imports.Newtonsoft.Json;
+using Raven.Json;
+using Raven.Json.Linq;
+using Raven.Storage;
 
 namespace Craftitude
 {
     public class Client
     {
         public string BasePath { get; set; }
-        public Cache Cache { get; set; }
-        public List<Repository> Repositories { get; private set; }
-        public ObservableCollection<Operation> Operations { get; set; } // TODO: Make operations list read-only to public
 
+        public List<IDocumentStore> Repositories { get; private set; }
+        public ObservableCollection<Operation> Operations { get; set; } // TODO: Make operations list read-only to public
         private int nextOperationIndexToAssign = 0;
 
-        /*
-
-        public event EventHandler<OperationUpdateEventArgs> OperationUpdate;
-
-        internal void OnOperationUpdate(OperationUpdateEventArgs e)
+        public void ConnectRepository(string repositoryUrl)
         {
-            if (OperationUpdate != null)
-                OperationUpdate.Invoke(this, e);
+            ConnectRepository(new Uri(repositoryUrl));
         }
 
-        internal void OnOperationUpdate(Operation e)
+        public void ConnectRepository(Uri repositoryUri)
         {
-            OnOperationUpdate(new OperationUpdateEventArgs(e));
+            if (!repositoryUri.Scheme.Equals("crep", StringComparison.OrdinalIgnoreCase))
+                throw new UriFormatException("Not a valid craftitude repository URI.");
+
+            string database = repositoryUri.AbsolutePath.Split('/').Last();
+            if (string.IsNullOrEmpty(database))
+                throw new UriFormatException("Not a valid Craftitude repository URI.");
+
+            var uriRebuilder = new UriBuilder(repositoryUri);
+            uriRebuilder.Path = repositoryUri.AbsolutePath.Substring(0, repositoryUri.AbsolutePath.Length - database.Length - 1);
+            uriRebuilder.Scheme = "http";
+
+            var document = new DocumentStore();
+            document.Url = repositoryUri.ToString();
+            document.DefaultDatabase = "";
         }
-        
-         */
 
         public Client(string basePath)
         {

@@ -17,15 +17,15 @@ set col_ok=2
 
 call check-nuget     
 if %errorlevel% neq 0 goto E_EXIT
-call check-svn
-if %errorlevel% neq 0 goto E_EXIT
+::call check-svn
+::if %errorlevel% neq 0 goto E_EXIT
 call check-git                   
 if %errorlevel% neq 0 goto E_EXIT
 ::call check-hg     
 ::if %errorlevel% neq 0 goto E_EXIT 
 
-call init-svn https://yaml.svn.codeplex.com/svn/Main/Core/ dependencies/yaml/Core
-call init-svn https://yaml.svn.codeplex.com/svn/Main/Abstract/ dependencies/yaml/Abstract
+::call init-svn https://yaml.svn.codeplex.com/svn/Main/Core/ dependencies/yaml/Core
+::call init-svn https://yaml.svn.codeplex.com/svn/Main/Abstract/ dependencies/yaml/Abstract
 call init-git https://github.com/chkn/AluminumLua.git dependencies/aluminumlua
 call init-nuget
 

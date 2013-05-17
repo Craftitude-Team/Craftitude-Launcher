@@ -82,14 +82,6 @@
       <Project>{bafd1b0d-16e3-4b17-bcd7-53c5fe3b6ab7}</Project>
       <Name>AluminumLua.Net40</Name>
     </ProjectReference>
-    <ProjectReference Include="..\dependencies\yaml\Abstract\Abstract.Net4.csproj">
-      <Project>{74cf1bdc-74b0-4b96-a2b5-a8a89a57295e}</Project>
-      <Name>Abstract.Net4</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\dependencies\yaml\Core\Core.Net4.csproj">
-      <Project>{f9e90814-289a-4244-ab47-8acc29a03b07}</Project>
-      <Name>Core.Net4</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

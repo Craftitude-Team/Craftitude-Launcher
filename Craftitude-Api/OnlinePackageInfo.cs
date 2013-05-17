@@ -14,84 +14,86 @@ using System.Text;
 
 namespace Craftitude
 {
-
-
-    public class OnlinePackageInfo : RavenJObject
+    /// <summary>
+    /// Represents package information.
+    /// </summary>
+    public class PackageInfo
     {
-        /// <summary>
-        /// The session via which the package's information is fetched.
-        /// </summary>
-        internal DocumentSession _activeSession { get; set; }
-
         /// <summary>
         /// Metadata for this package.
         /// </summary>
-        public OnlinePackageMetadata Metadata { get; private set; }
-
-        internal OnlinePackageInfo()
-            : base()
-        {
-            Metadata = new OnlinePackageMetadata(this);
-        }
+        public PackageMetadata Metadata { get; private set; }
     }
 
-    public class OnlinePackageMetadata
+    /// <summary>
+    /// Represents a version of an online package.
+    /// </summary>
+    public class PackageVersion
     {
-        OnlinePackageInfo _obj;
+        /// <summary>
+        /// The ID of this version. Usually the version number.
+        /// </summary>
+        public string ID { get; set; }
 
-        private RavenJObject _metadata { get { return _obj._activeSession.Advanced.GetMetadataFor(_obj); } }
+        /// <summary>
+        /// The date on which this version has been published.
+        /// </summary>
+        public DateTime Date { get; set; }
 
+        /// <summary>
+        /// The dependencies of this version.
+        /// </summary>
+        public List<Dependency> Dependencies { get; set; }
+
+        /// <summary>
+        /// The installation script, an actual Lua script.
+        /// This script will be executed when the package is going to be installed.
+        /// </summary>
+        public string InstallScript { get; set; }
+
+        /// <summary>
+        /// The uninstallation script, an actual Lua script.
+        /// This script will be executed when the package is going to be uninstalled.
+        /// </summary>
+        public string UninstallScript { get; set; }
+
+        /// <summary>
+        /// The startup script, an actual Lua script.
+        /// This script will be executed to append required files to the startup command-line of
+        /// java.
+        /// </summary>
+        public string StartupScript { get; set; }
+    }
+
+    /// <summary>
+    /// Represents online package metadata.
+    /// </summary>
+    public class PackageMetadata
+    {
         /// <summary>
         /// The package's description. May be null if not given.
         /// </summary>
-        public string Description { get { return _metadata["Description"].Value<string>(); } }
+        public string Description { get; protected set; }
 
         /// <summary>
         /// The list of people which develop the package's contents.
         /// </summary>
-        public List<Person> Developers { get { return _metadata["Developers"].Value<List<Person>>(); } }
+        public List<Person> Developers { get; protected set; }
 
         /// <summary>
         /// The homepage of that package. May be null if not given.
         /// </summary>
-        public string Homepage { get { return _metadata["Homepage"].Value<string>(); } }
+        public string Homepage { get; protected set; }
 
         /// <summary>
         /// The people which are maintaining the package on the repository.
         /// </summary>
-        public List<Person> Maintainers { get { return _metadata["Maintainers"].Value<List<Person>>(); } }
+        public List<Person> Maintainers { get; protected set; }
 
         /// <summary>
         /// The package's name.
         /// </summary>
-        public string Name { get { return _metadata["Name"].Value<string>(); } }
-
-        internal OnlinePackageMetadata(OnlinePackageInfo obj)
-        {
-            this._obj = obj;
-        }
-    }
-
-    public class Person
-    {
-        /// <summary>
-        /// The e-mail address of that person. May be null if not given.
-        /// </summary>
-        public string EMail { get; protected set; }
-
-        /// <summary>
-        /// The nickname or alias of that person.
-        /// </summary>
         public string Name { get; protected set; }
 
-        /// <summary>
-        /// The real name of that person. May be null if not given.
-        /// </summary>
-        public string RealName { get; protected set; }
-
-        /// <summary>
-        /// The url referring to a profile of that person. May be null if not given.
-        /// </summary>
-        public string Url { get; protected set; }
     }
 }

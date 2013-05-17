@@ -65,9 +65,12 @@
     <Compile Include="App_Code\Expansive.cs" />
     <Compile Include="Cache.cs" />
     <Compile Include="Client.cs" />
+    <Compile Include="Dependency.cs" />
+    <Compile Include="DependencyType.cs" />
     <Compile Include="InstructionHelper.cs" />
     <Compile Include="License.cs" />
     <Compile Include="OnlinePackageInfo.cs" />
+    <Compile Include="Person.cs" />
     <Compile Include="PrioritizedList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -76,6 +79,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Operation.cs" />
+    <Compile Include="VersionConditionType.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\dependencies\aluminumlua\vs2010\AluminumLua.Net40\AluminumLua.Net40.csproj">

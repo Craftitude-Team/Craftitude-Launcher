@@ -67,6 +67,7 @@
     <Compile Include="Client.cs" />
     <Compile Include="Dependency.cs" />
     <Compile Include="DependencyType.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="InstructionHelper.cs" />
     <Compile Include="License.cs" />
     <Compile Include="OnlinePackageInfo.cs" />

@@ -83,14 +83,15 @@ namespace Craftitude
 
         public void AddRepository(Uri repositoryUri)
         {
-            repositoryUri = GetHttpFromCrepUrl(repositoryUri);
+            string databaseName = string.Empty;
+            repositoryUri = GetHttpFromCrepUrl(repositoryUri, out databaseName);
 
-            if (Repositories.Where(r => r.Url == repositoryUri.ToString()).Any())
+            if (Repositories.Where(r => r.Url == repositoryUri.ToString() && r.DefaultDatabase == databaseName).Any())
                 return; // already added
 
             var document = new DocumentStore();
             document.Url = repositoryUri.ToString();
-            document.DefaultDatabase = "";
+            document.DefaultDatabase = databaseName;
             document.Initialize();
 
             Repositories.Add(document);
@@ -98,21 +99,57 @@ namespace Craftitude
 
         public void DeleteRepository(Uri repositoryUri)
         {
-            repositoryUri = GetHttpFromCrepUrl(repositoryUri);
-            Repositories.RemoveAll(r => r.Url == repositoryUri.ToString());
+            string databaseName = string.Empty;
+            repositoryUri = GetHttpFromCrepUrl(repositoryUri, out databaseName);
+
+            // Dispose connection
+            foreach (var r in Repositories.Where(r => r.Url == repositoryUri.ToString() && r.DefaultDatabase == databaseName))
+                r.Dispose();
+
+            // Remove connection
+            Repositories.RemoveAll(r => r.Url == repositoryUri.ToString() && r.DefaultDatabase == databaseName);
         }
 
-        protected static Uri GetHttpFromCrepUrl(Uri repositoryUri)
+        public IEnumerable<PackageInfo> GetRemotePackageInfo(string packageID)
+        {
+            foreach (var repository in Repositories)
+                using (var session = repository.OpenSession())
+                    foreach (var result in session.Query<PackageInfo>(packageID))
+                        yield return result;
+        }
+
+        /// <summary>
+        /// Gets locally cached package information for a specific package.
+        /// </summary>
+        /// <param name="packageID">The specific package ID</param>
+        /// <exception cref="LocalCacheCorruptException" />
+        /// <returns>NULL, if the package isn't installed. Package information if it is installed.</returns>
+        public PackageInfo GetLocalPackageInfo(string packageID)
+        {
+            using (var session = Cache._store.OpenSession())
+            {
+                var result = session.Query<PackageInfo>(packageID);
+                if (!result.Any())
+                    return null;
+                else
+                    if (result.Count() == 1)
+                        return result.Single();
+                    else
+                        throw new LocalCacheCorruptException("Local cache corrupt.");
+            }
+        }
+
+        protected static Uri GetHttpFromCrepUrl(Uri repositoryUri, out string databaseName)
         {
             if (!repositoryUri.Scheme.Equals("crep", StringComparison.OrdinalIgnoreCase))
                 throw new UriFormatException("Not a valid craftitude repository URI.");
 
-            string database = repositoryUri.AbsolutePath.Split('/').Last();
-            if (string.IsNullOrEmpty(database))
+            databaseName = repositoryUri.AbsolutePath.Split('/').Last();
+            if (string.IsNullOrEmpty(databaseName))
                 throw new UriFormatException("Not a valid Craftitude repository URI.");
 
             var uriRebuilder = new UriBuilder(repositoryUri);
-            uriRebuilder.Path = repositoryUri.AbsolutePath.Substring(0, repositoryUri.AbsolutePath.Length - database.Length - 1);
+            uriRebuilder.Path = repositoryUri.AbsolutePath.Substring(0, repositoryUri.AbsolutePath.Length - databaseName.Length - 1);
             uriRebuilder.Scheme = "http";
 
             return uriRebuilder.Uri;

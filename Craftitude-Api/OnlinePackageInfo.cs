@@ -26,6 +26,15 @@ namespace Craftitude
     }
 
     /// <summary>
+    /// Represents locally cached package information.
+    /// </summary>
+    public class LocalPackageInfo : PackageInfo
+    {
+        public DateTime InstallationTime { get; set; }
+        public string 
+    }
+
+    /// <summary>
     /// Represents a version of an online package.
     /// </summary>
     public class PackageVersion

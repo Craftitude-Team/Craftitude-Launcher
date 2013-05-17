@@ -1,4 +1,4 @@
-﻿#region Imports (14)
+﻿#region Imports (13)
 
 using Raven;
 using Raven.Client;
@@ -13,9 +13,8 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using YaTools.Yaml;
 
-#endregion Imports (14)
+#endregion Imports (13)
 
 namespace Craftitude
 {

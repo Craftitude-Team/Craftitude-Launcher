@@ -24,18 +24,13 @@ namespace Craftitude
 {
     public class Client
     {
-        public string BasePath { get; set; }
-
-        public List<IDocumentStore> Repositories { get; private set; }
-        public ObservableCollection<Operation> Operations { get; set; } // TODO: Make operations list read-only to public
+        public string BasePath { get; private set; }
+        public Cache Cache { get; private set; }
+        public List<DocumentStore> Repositories { get; private set; }
+        public ObservableCollection<Operation> Operations { get; private set; } // TODO: Make operations list read-only to public
         private int nextOperationIndexToAssign = 0;
 
-        public void ConnectRepository(string repositoryUrl)
-        {
-            ConnectRepository(new Uri(repositoryUrl));
-        }
-
-        public void ConnectRepository(Uri repositoryUri)
+        protected static Uri GetHttpFromCrepUrl(Uri repositoryUri)
         {
             if (!repositoryUri.Scheme.Equals("crep", StringComparison.OrdinalIgnoreCase))
                 throw new UriFormatException("Not a valid craftitude repository URI.");
@@ -48,9 +43,33 @@ namespace Craftitude
             uriRebuilder.Path = repositoryUri.AbsolutePath.Substring(0, repositoryUri.AbsolutePath.Length - database.Length - 1);
             uriRebuilder.Scheme = "http";
 
+            return uriRebuilder.Uri;
+        }
+
+        public void AddRepository(string repositoryUrl)
+        {
+            AddRepository(new Uri(repositoryUrl));
+        }
+
+        public void AddRepository(Uri repositoryUri)
+        {
+            repositoryUri = GetHttpFromCrepUrl(repositoryUri);
+
+            if (Repositories.Where(r => r.Url == repositoryUri.ToString()).Any())
+                return; // already added
+
             var document = new DocumentStore();
             document.Url = repositoryUri.ToString();
             document.DefaultDatabase = "";
+            document.Initialize();
+
+            Repositories.Add(document);
+        }
+
+        public void DeleteRepository(Uri repositoryUri)
+        {
+            repositoryUri = GetHttpFromCrepUrl(repositoryUri);
+            Repositories.RemoveAll(r => r.Url == repositoryUri.ToString());
         }
 
         public Client(string basePath)
@@ -97,35 +116,17 @@ namespace Craftitude
             return newOperationIndex;
         }
 
-        public bool IsInstalled(string packageID)
-        {
-            return Cache.GetInstalledPackagesCache().GetPackage(packageID) != null;
-        }
+        // TODO: Repository caching? Complete? Not at all?
 
-        public void Install(string packageID)
-        {
-        }
+        // TODO: Implement FlagInstall - version flagging for "to install"
+        // TODO: Implement FlagUninstall - version flagging for "to uninstall"
 
-        public void Uninstall(string packageID)
-        {
-        }
+        // TODO: Implement GetOfflinePackageInfo - local package info fetching
+        // TODO: Implement GetOnlinePackageInfo - remote package info fetching
+        // TODO: Implement IsInstalled if needed - function to check if package is installed
 
-        public void Update(string packageID)
-        {
-        }
+        // TODO: Implement GetOnlineScript - remote package script fetching (private)
+        // TODO: Implement CacheScript - remote to local package script caching (private)
 
-        public RepositoryPackage GetOnlinePackageInfo(string packageID)
-        {
-
-        }
-
-        public InstalledPackage GetOfflinePackageInfo(string packageID)
-        {
-        }
-
-        public IEnumerable<InstalledPackage> GetInstalledPackages()
-        {
-            
-        }
     }
 }

@@ -17,34 +17,46 @@ namespace Craftitude
 {
     public class Cache
     {
-        // TODO: Add status event(s)
+        // TODO: Add operations and complete code for them
 
-        internal string _path;
+        internal DocumentStore _store;
         internal Client _client;
 
         internal Cache(Client client, string folderPath)
         {
             this._client = client;
-            if (!Directory.Exists(folderPath))
-                Directory.CreateDirectory(folderPath);
-            this._path = Path.GetFullPath(folderPath);
+
+            // RavenDB connection to local cache database
+            this._store = new EmbeddableDocumentStore()
+            {
+                DataDirectory = folderPath,
+                DefaultDatabase = "Craftitude_Installation"
+            };
+            _store.Initialize();
         }
 
-        public RepositoryCache GetInstalledPackagesCache()
+        private IDocumentSession GetSessionForInstallationCache()
         {
-            return GetRepositoryCache("installation");
+            return _store.OpenSession();
         }
-
-        private RepositoryCache GetRepositoryCache(string cacheId)
+        private IAsyncDocumentSession GetAsyncSessionForInstallationCache()
         {
-            return new RepositoryCache(this, cacheId);
+            return _store.OpenAsyncSession();
         }
-
-        internal RepositoryCache GetRepositoryCache(Uri url)
+        private IDocumentSession GetSessionForRepository(Uri repositoryUri)
         {
-            return GetRepositoryCache(GenerateCacheId(url.AbsoluteUri));
+            return _store.OpenSession("Craftitude_Repository_" + GenerateCacheId(repositoryUri.ToString()));
         }
-
+        private IAsyncDocumentSession GetAsyncSessionForRepository(Uri repositoryUri)
+        {
+            return _store.OpenAsyncSession("Craftitude_Repository_" + GenerateCacheId(repositoryUri.ToString()));
+        }
+        
+        /// <summary>
+        /// Generates a unique ID for a repository's URL.
+        /// </summary>
+        /// <param name="url">The repository URL</param>
+        /// <returns>A unique hash of the repository URL</returns>
         private static string GenerateCacheId(string url)
         {
             return BitConverter.ToString(SHA512.Create().ComputeHash(Encoding.UTF8.GetBytes(url))).Replace("-", "\\");

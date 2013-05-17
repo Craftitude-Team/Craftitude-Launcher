@@ -1,26 +1,30 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Security.Cryptography;
-using System.IO;
-using YaTools.Yaml;
+﻿#region Imports (14)
+
 using Raven;
 using Raven.Client;
 using Raven.Client.Document;
 using Raven.Client.Embedded;
-using Raven.Storage;
 using Raven.Database;
+using Raven.Storage;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using YaTools.Yaml;
+
+#endregion Imports (14)
 
 namespace Craftitude
 {
+
+
     public class Cache
     {
-        // TODO: Add operations and complete code for them
-
-        internal DocumentStore _store;
         internal Client _client;
+        internal DocumentStore _store;
 
         internal Cache(Client client, string folderPath)
         {
@@ -35,23 +39,6 @@ namespace Craftitude
             _store.Initialize();
         }
 
-        private IDocumentSession GetSessionForInstallationCache()
-        {
-            return _store.OpenSession();
-        }
-        private IAsyncDocumentSession GetAsyncSessionForInstallationCache()
-        {
-            return _store.OpenAsyncSession();
-        }
-        private IDocumentSession GetSessionForRepository(Uri repositoryUri)
-        {
-            return _store.OpenSession("Craftitude_Repository_" + GenerateCacheId(repositoryUri.ToString()));
-        }
-        private IAsyncDocumentSession GetAsyncSessionForRepository(Uri repositoryUri)
-        {
-            return _store.OpenAsyncSession("Craftitude_Repository_" + GenerateCacheId(repositoryUri.ToString()));
-        }
-        
         /// <summary>
         /// Generates a unique ID for a repository's URL.
         /// </summary>
@@ -60,6 +47,26 @@ namespace Craftitude
         private static string GenerateCacheId(string url)
         {
             return BitConverter.ToString(SHA512.Create().ComputeHash(Encoding.UTF8.GetBytes(url))).Replace("-", "\\");
+        }
+
+        private IAsyncDocumentSession GetAsyncSessionForInstallationCache()
+        {
+            return _store.OpenAsyncSession();
+        }
+
+        private IAsyncDocumentSession GetAsyncSessionForRepository(Uri repositoryUri)
+        {
+            return _store.OpenAsyncSession("Craftitude_Repository_" + GenerateCacheId(repositoryUri.ToString()));
+        }
+
+        private IDocumentSession GetSessionForInstallationCache()
+        {
+            return _store.OpenSession();
+        }
+
+        private IDocumentSession GetSessionForRepository(Uri repositoryUri)
+        {
+            return _store.OpenSession("Craftitude_Repository_" + GenerateCacheId(repositoryUri.ToString()));
         }
     }
 }

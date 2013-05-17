@@ -1,27 +1,18 @@
-﻿using System;
+﻿#region Imports (4)
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+#endregion Imports (4)
+
 namespace Craftitude
 {
-    public class Operation
-    {
-        public int ID { get; private set; }
-        public Client Client { get; private set; }
-        public string Text { get; internal set; }
 
-        public Operation(Client client)
-        {
-            this.ID = client.GetOperationID();
-            this.Client = client;
-        }
-    }
 
     public class CollectiveOperation : Operation
     {
-        public List<Operation> Suboperations { get; internal set; }
-
         public double Progress
         {
             get
@@ -30,10 +21,27 @@ namespace Craftitude
             }
         }
 
+        public List<Operation> Suboperations { get; internal set; }
+
         public CollectiveOperation(Client client)
             : base(client)
         {
             this.Suboperations = new List<Operation>();
+        }
+    }
+
+    public class Operation
+    {
+        public Client Client { get; private set; }
+
+        public int ID { get; private set; }
+
+        public string Text { get; internal set; }
+
+        public Operation(Client client)
+        {
+            this.ID = client.GetOperationID();
+            this.Client = client;
         }
     }
 
@@ -47,17 +55,4 @@ namespace Craftitude
             Progress = 0;
         }
     }
-
-    /*
-    public class OperationUpdateEventArgs
-    {
-        public Operation Operation { get; private set; }
-
-        public OperationUpdateEventArgs(Operation operation)
-        {
-            this.Operation = operation;
-        }
-    }
-     */
-
 }

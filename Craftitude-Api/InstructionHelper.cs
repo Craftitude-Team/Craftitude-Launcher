@@ -1,21 +1,32 @@
-﻿using System;
+﻿#region Imports (5)
+
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.IO;
+
+#endregion Imports (5)
 
 namespace Craftitude
 {
+
+
     internal class InstructionHelper
     {
+        internal DirectoryInfo _basePath;
+        internal Client _client;
+
         internal InstructionHelper(Client mainClient)
         {
             this._client = mainClient;
             this._basePath = new DirectoryInfo(_client.BasePath);
         }
 
-        internal Client _client;
-        internal DirectoryInfo _basePath;
+        public void DeleteDir(string targetdir)
+        {
+            _basePath.CreateSubdirectory(targetdir).Delete(true);
+        }
 
         public void DeleteFile(string targetfile)
         {
@@ -24,17 +35,10 @@ namespace Craftitude
                 f.Delete();
         }
 
-        public void DeleteDir(string targetdir)
-        {
-            _basePath.CreateSubdirectory(targetdir).Delete(true);
-        }
-
         public void Move(string source, string target)
         {
             var f = new FileInfo(Path.Combine(_basePath.ToString(), source));
             f.MoveTo(target);
         }
-
-        // TODO: Complete instruction set
     }
 }

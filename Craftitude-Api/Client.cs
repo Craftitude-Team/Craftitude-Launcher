@@ -166,11 +166,11 @@ namespace Craftitude
         /// <param name="packageID">The specific package ID</param>
         /// <exception cref="LocalCacheCorruptException" />
         /// <returns>NULL, if the package isn't installed. Package information if it is installed.</returns>
-        public PackageInfo GetLocalPackageInfo(string packageID)
+        public LocalPackageInfo GetLocalPackageInfo(string packageID)
         {
             using (var session = Cache._store.OpenSession())
             {
-                var result = session.Query<PackageInfo>(packageID);
+                var result = session.Query<LocalPackageInfo>(packageID);
                 if (!result.Any())
                     return null;
                 else

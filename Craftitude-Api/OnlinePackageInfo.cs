@@ -31,7 +31,8 @@ namespace Craftitude
     public class LocalPackageInfo : PackageInfo
     {
         public DateTime InstallationTime { get; set; }
-        public string 
+        public string WantedConditions { get; set; }
+        public string InstalledVersionID { get; set; }
     }
 
     /// <summary>

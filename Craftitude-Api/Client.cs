@@ -47,9 +47,17 @@ namespace Craftitude
         public ObservableCollection<Operation> Operations { get; private set; }
 
         /// <summary>
-        /// The repositories which have been added to the client.
+        /// The repository databases which have been added to the client.
         /// </summary>
         internal List<DocumentStore> _repositories { get; private set; }
+
+        /// <summary>
+        /// The registered Craftitude repository server Uris.
+        /// </summary>
+        public ReadOnlyCollection<Uri> RegisteredRepositories
+        {
+            get { return new ReadOnlyCollection<Uri>(_repositories.Select(r => GetCrepFromHttpUrl(new Uri(r.Url), r.DefaultDatabase)).ToList()); }
+        }
 
         /// <summary>
         /// The constructor.
@@ -191,11 +199,11 @@ namespace Craftitude
         }
 
         /// <summary>
-        /// Gets the raw HTTP Uri from a Craftitude repository database server reference Uri.
+        /// Gets the raw HTTP Uri and the database name from a Craftitude repository database server reference Uri.
         /// </summary>
         /// <param name="repositoryUri">The repository uri. The syntax is "cref://host[:port][/path]/repositoryId".</param>
         /// <param name="databaseName">The database name (repositoryId) read from the Uri.</param>
-        /// <returns></returns>
+        /// <returns>The raw HTTP uri</returns>
         protected static Uri GetHttpFromCrepUrl(Uri repositoryUri, out string databaseName)
         {
             if (!repositoryUri.Scheme.Equals("crep", StringComparison.OrdinalIgnoreCase))
@@ -209,6 +217,21 @@ namespace Craftitude
             uriRebuilder.Path = repositoryUri.AbsolutePath.Substring(0, repositoryUri.AbsolutePath.Length - databaseName.Length - 1);
             uriRebuilder.Scheme = "http";
 
+            return uriRebuilder.Uri;
+        }
+
+        /// <summary>
+        /// Generates the Craftitude repository database server reference Uri from the raw HTTP Uri and the database name.
+        /// </summary>
+        /// <param name="httpUri">The URI of the server itself</param>
+        /// <param name="databaseName">The database name</param>
+        /// <returns>The crep:// type Uri.</returns>
+        protected static Uri GetCrepFromHttpUrl(Uri httpUri, string databaseName)
+        {
+            var uriRebuilder = new UriBuilder(httpUri);
+            uriRebuilder.Scheme = "crep";
+            uriRebuilder.Path += "/";
+            uriRebuilder.Path += databaseName;
             return uriRebuilder.Uri;
         }
 

@@ -23,6 +23,11 @@ namespace Craftitude
         /// Metadata for this package.
         /// </summary>
         public PackageMetadata Metadata { get; internal set; }
+
+        /// <summary>
+        /// Available package versions.
+        /// </summary>
+        public List<PackageVersion> Versions { get; internal set; }
     }
 
     /// <summary>

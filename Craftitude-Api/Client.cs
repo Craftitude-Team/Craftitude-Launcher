@@ -31,14 +31,30 @@ namespace Craftitude
     {
         private int nextOperationIndexToAssign = 0;
 
+        /// <summary>
+        /// The working directory of the client. This is also the target path for all installations.
+        /// </summary>
         public string BasePath { get; private set; }
 
+        /// <summary>
+        /// The cache for this client.
+        /// </summary>
         public Cache Cache { get; private set; }
 
+        /// <summary>
+        /// Currently running operations.
+        /// </summary>
         public ObservableCollection<Operation> Operations { get; private set; }
 
-        public List<DocumentStore> Repositories { get; private set; }
+        /// <summary>
+        /// The repositories which have been added to the client.
+        /// </summary>
+        internal List<DocumentStore> _repositories { get; private set; }
 
+        /// <summary>
+        /// The constructor.
+        /// </summary>
+        /// <param name="basePath">The working directory of the client. This is also the target path for all installations.</param>
         public Client(string basePath)
         {
             if (!Directory.Exists(basePath))
@@ -52,7 +68,7 @@ namespace Craftitude
             this.Cache = new Cache(this, Path.Combine(craftitudeBasePath, "craftitude.cache"));
 
             // Load repositories
-            this.Repositories = new List<Repository>();
+            this._repositories = new List<Repository>();
             string repositoriesConf = Path.Combine(craftitudeBasePath, "repositories.conf");
             if (!File.Exists(repositoriesConf))
             {
@@ -67,7 +83,7 @@ namespace Craftitude
                     {
                         var line = f.ReadLine();
                         if (Repository.IsValidConfigString(line))
-                            this.Repositories.AddRange(Repository.FromConfigString(line, this));
+                            this._repositories.AddRange(Repository.FromConfigString(line, this));
                     }
                 }
             }
@@ -76,17 +92,25 @@ namespace Craftitude
             this.Operations = new ObservableCollection<Operation>();
         }
 
+        /// <summary>
+        /// Add a repository and connect to it.
+        /// </summary>
+        /// <param name="repositoryUrl">The repository url. The syntax is "cref://host[:port][/path]/repositoryId".</param>
         public void AddRepository(string repositoryUrl)
         {
             AddRepository(new Uri(repositoryUrl));
         }
 
+        /// <summary>
+        /// Add a repository and connect to it.
+        /// </summary>
+        /// <param name="repositoryUri">The repository uri. Scheme must be "crep" and path must at least contain the repositoryId.</param>
         public void AddRepository(Uri repositoryUri)
         {
             string databaseName = string.Empty;
             repositoryUri = GetHttpFromCrepUrl(repositoryUri, out databaseName);
 
-            if (Repositories.Where(r => r.Url == repositoryUri.ToString() && r.DefaultDatabase == databaseName).Any())
+            if (_repositories.Where(r => r.Url == repositoryUri.ToString() && r.DefaultDatabase == databaseName).Any())
                 return; // already added
 
             var document = new DocumentStore();
@@ -94,25 +118,35 @@ namespace Craftitude
             document.DefaultDatabase = databaseName;
             document.Initialize();
 
-            Repositories.Add(document);
+            _repositories.Add(document);
         }
 
+        /// <summary>
+        /// Disconnect from a repository and remove it.
+        /// </summary>
+        /// <param name="repositoryUri">The repository uri. Scheme must be "crep" and path must at least contain the repositoryId.</param>
         public void DeleteRepository(Uri repositoryUri)
         {
             string databaseName = string.Empty;
             repositoryUri = GetHttpFromCrepUrl(repositoryUri, out databaseName);
 
             // Dispose connection
-            foreach (var r in Repositories.Where(r => r.Url == repositoryUri.ToString() && r.DefaultDatabase == databaseName))
+            foreach (var r in _repositories.Where(r => r.Url == repositoryUri.ToString() && r.DefaultDatabase == databaseName))
                 r.Dispose();
 
             // Remove connection
-            Repositories.RemoveAll(r => r.Url == repositoryUri.ToString() && r.DefaultDatabase == databaseName);
+            _repositories.RemoveAll(r => r.Url == repositoryUri.ToString() && r.DefaultDatabase == databaseName);
         }
 
+        /// <summary>
+        /// Fetches up-to-date information about a package.
+        /// </summary>
+        /// <param name="packageID">The package ID to ask information for</param>
+        /// <returns>All available package information for a package ID.
+        /// This is usually only containing exact one PackageInfo item but in case there are duplicates on multiple repositories it can also be more.</returns>
         public IEnumerable<PackageInfo> GetRemotePackageInfo(string packageID)
         {
-            foreach (var repository in Repositories)
+            foreach (var repository in _repositories)
                 using (var session = repository.OpenSession())
                     foreach (var result in session.Query<PackageInfo>(packageID))
                         yield return result;
@@ -139,6 +173,29 @@ namespace Craftitude
             }
         }
 
+        /// <summary>
+        /// Checks if a Uri is a valid reference to a Craftitude repository database server.
+        /// </summary>
+        /// <param name="repositoryUri">The repository uri to check.</param>
+        /// <returns>True for valid Uris, False for invalid Uris.</returns>
+        protected static bool IsValidCrepUrl(Uri repositoryUri)
+        {
+            if (!repositoryUri.Scheme.Equals("crep", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            string databaseName = repositoryUri.AbsolutePath.Split('/').Last();
+            if (string.IsNullOrEmpty(databaseName))
+                return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the raw HTTP Uri from a Craftitude repository database server reference Uri.
+        /// </summary>
+        /// <param name="repositoryUri">The repository uri. The syntax is "cref://host[:port][/path]/repositoryId".</param>
+        /// <param name="databaseName">The database name (repositoryId) read from the Uri.</param>
+        /// <returns></returns>
         protected static Uri GetHttpFromCrepUrl(Uri repositoryUri, out string databaseName)
         {
             if (!repositoryUri.Scheme.Equals("crep", StringComparison.OrdinalIgnoreCase))
@@ -155,6 +212,10 @@ namespace Craftitude
             return uriRebuilder.Uri;
         }
 
+        /// <summary>
+        /// Gets the ID for the next operation and increases it by one.
+        /// </summary>
+        /// <returns>The next available operation ID</returns>
         internal int GetOperationID()
         {
             int newOperationIndex = nextOperationIndexToAssign;

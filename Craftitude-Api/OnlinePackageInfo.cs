@@ -22,7 +22,7 @@ namespace Craftitude
         /// <summary>
         /// Metadata for this package.
         /// </summary>
-        public PackageMetadata Metadata { get; private set; }
+        public PackageMetadata Metadata { get; internal set; }
     }
 
     /// <summary>
@@ -30,9 +30,20 @@ namespace Craftitude
     /// </summary>
     public class LocalPackageInfo : PackageInfo
     {
-        public DateTime InstallationTime { get; set; }
-        public string WantedConditions { get; set; }
-        public string InstalledVersionID { get; set; }
+        /// <summary>
+        /// Gets when this package has been installed.
+        /// </summary>
+        public DateTime InstallationTime { get; internal set; }
+
+        /// <summary>
+        /// Gets under which conditions this package has been installed.
+        /// </summary>
+        public string WantedConditions { get; internal set; }
+
+        /// <summary>
+        /// Gets which version of this package is currently installed.
+        /// </summary>
+        public string InstalledVersionID { get; internal set; }
     }
 
     /// <summary>
@@ -43,36 +54,36 @@ namespace Craftitude
         /// <summary>
         /// The ID of this version. Usually the version number.
         /// </summary>
-        public string ID { get; set; }
+        public string ID { get; internal set; }
 
         /// <summary>
         /// The date on which this version has been published.
         /// </summary>
-        public DateTime Date { get; set; }
+        public DateTime Date { get; internal set; }
 
         /// <summary>
         /// The dependencies of this version.
         /// </summary>
-        public List<Dependency> Dependencies { get; set; }
+        public List<Dependency> Dependencies { get; internal set; }
 
         /// <summary>
         /// The installation script, an actual Lua script.
         /// This script will be executed when the package is going to be installed.
         /// </summary>
-        public string InstallScript { get; set; }
+        public string InstallScript { get; internal set; }
 
         /// <summary>
         /// The uninstallation script, an actual Lua script.
         /// This script will be executed when the package is going to be uninstalled.
         /// </summary>
-        public string UninstallScript { get; set; }
+        public string UninstallScript { get; internal set; }
 
         /// <summary>
         /// The startup script, an actual Lua script.
         /// This script will be executed to append required files to the startup command-line of
         /// java.
         /// </summary>
-        public string StartupScript { get; set; }
+        public string StartupScript { get; internal set; }
     }
 
     /// <summary>
@@ -83,27 +94,27 @@ namespace Craftitude
         /// <summary>
         /// The package's description. May be null if not given.
         /// </summary>
-        public string Description { get; protected set; }
+        public string Description { get; internal set; }
 
         /// <summary>
         /// The list of people which develop the package's contents.
         /// </summary>
-        public List<Person> Developers { get; protected set; }
+        public List<Person> Developers { get; internal set; }
 
         /// <summary>
         /// The homepage of that package. May be null if not given.
         /// </summary>
-        public string Homepage { get; protected set; }
+        public string Homepage { get; internal set; }
 
         /// <summary>
         /// The people which are maintaining the package on the repository.
         /// </summary>
-        public List<Person> Maintainers { get; protected set; }
+        public List<Person> Maintainers { get; internal set; }
 
         /// <summary>
         /// The package's name.
         /// </summary>
-        public string Name { get; protected set; }
+        public string Name { get; internal set; }
 
     }
 }

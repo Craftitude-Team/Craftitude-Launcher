@@ -75,27 +75,6 @@ namespace Craftitude
 
             this.Cache = new Cache(this, Path.Combine(craftitudeBasePath, "craftitude.cache"));
 
-            // Load repositories
-            this._repositories = new List<Repository>();
-            string repositoriesConf = Path.Combine(craftitudeBasePath, "repositories.conf");
-            if (!File.Exists(repositoriesConf))
-            {
-                using (var f = File.CreateText(repositoriesConf))
-                    f.Flush();
-            }
-            else
-            {
-                using (var f = File.OpenText(repositoriesConf))
-                {
-                    while (!f.EndOfStream)
-                    {
-                        var line = f.ReadLine();
-                        if (Repository.IsValidConfigString(line))
-                            this._repositories.AddRange(Repository.FromConfigString(line, this));
-                    }
-                }
-            }
-
             // Operations collection
             this.Operations = new ObservableCollection<Operation>();
         }
@@ -179,6 +158,11 @@ namespace Craftitude
                     else
                         throw new LocalCacheCorruptException("Local cache corrupt.");
             }
+        }
+
+        public void InstallPackage(string packageID, string versionID)
+        {
+
         }
 
         /// <summary>

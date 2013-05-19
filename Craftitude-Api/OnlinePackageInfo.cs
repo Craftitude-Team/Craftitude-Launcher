@@ -27,7 +27,81 @@ namespace Craftitude
         /// <summary>
         /// Available package versions.
         /// </summary>
-        public List<PackageVersion> Versions { get; internal set; }
+        public Dictionary<string, PackageVersion> Versions { get; internal set; }
+
+        /// <summary>
+        /// Returns versions matching specific conditions.
+        /// </summary>
+        /// <param name="conditions">The conditions to match the available versions against.</param>
+        /// <returns></returns>
+        internal IEnumerable<PackageVersion> FilterVersions(params string[] conditions)
+        {
+            // All versions.
+            var versions = this.Versions.ToList();
+
+            // Apply each conditions one by one
+            // TODO: Allow wildcards?
+            foreach (var condition in conditions)
+            {
+                string target = condition;
+
+                bool negative = false;
+                if(target.First() == '!')
+                {
+                    negative = true;
+                    target = target.Substring(1);
+                }
+
+                List<char> operators = new List<char>();
+                do
+                {
+                    switch (condition.First())
+                    {
+                        case '>':
+                        case '=':
+                        case '<':
+                            operators.Add(condition.First());
+                            target = target.Substring(1);
+                            continue;
+                    }
+                } while (false);
+
+                string @operator = new string(operators.ToArray());
+
+                switch (comparisonOperator)
+                {
+                    case '!': // not equal
+                        {
+                            versions = versions.Where(i => !i.Key.Equals(comparisonTarget)) as Dictionary<string, PackageVersion>;
+                        } break;
+                    case '=': // equal
+                        {
+                            versions = versions.Where(i => i.Key.Equals(comparisonTarget)) as Dictionary<string, PackageVersion>;
+                        } break;
+                    case '>': // newer than
+                        {
+                            var comparisonTargetIndex = GetVersionIndex(comparisonTarget);
+                            
+                            versions = versions.Where(i => GetVersionIndex(i.Key) > comparisonTargetIndex) as Dictionary<string, PackageVersion>;
+                        } break;
+                    case '<': // older than
+                        {
+                            var comparisonTargetIndex = GetVersionIndex(comparisonTarget);
+                            versions = versions.Where(i => GetVersionIndex(i.Key) > comparisonTargetIndex) as Dictionary<string, PackageVersion>;
+                        } break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the index of a specific version ID.
+        /// </summary>
+        /// <param name="versionID">The specific version ID</param>
+        /// <returns></returns>
+        internal int GetVersionIndex(string versionID)
+        {
+            return Versions.Keys.ToList().IndexOf(versionID);
+        }
     }
 
     /// <summary>

@@ -43,8 +43,8 @@ namespace Craftitude
             public string Name { get; internal set; }
             public string Description { get; internal set; }
             public string Homepage { get; internal set; }
-            public List<string> Developers { get; internal set; }
-            public List<string> Maintainers { get; internal set; }
+            public List<Person> Developers { get; internal set; }
+            public List<Person> Maintainers { get; internal set; }
 
             public List<Version> Versions { get; internal set; }
 

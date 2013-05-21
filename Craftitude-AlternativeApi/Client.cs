@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using Raven;
 using Raven.Client;
 using Raven.Client.Extensions;
@@ -13,11 +15,17 @@ namespace Craftitude
 {
     public class CraftitudeClient
     {
-        public class Cache
+        public CraftitudeClient(string basePath)
         {
-            EmbeddableDocumentStore _store;
+            this.Cache = new CacheDatabase(basePath);
+        }
 
-            public Cache(string path)
+        public CacheDatabase Cache { get; internal set; }
+        public class CacheDatabase
+        {
+            internal EmbeddableDocumentStore _store;
+
+            public CacheDatabase(string path)
             {
                 _store = new EmbeddableDocumentStore()
                 {
@@ -38,41 +46,266 @@ namespace Craftitude
             }
         }
 
+        public List<Repository> Repositories = new List<Repository>();
+        public class Repository
+        {
+            internal DocumentStore _store;
+
+            public Repository(Uri uri)
+            {
+                if (!uri.Scheme.Equals("crep", StringComparison.OrdinalIgnoreCase))
+                    throw new UriFormatException("This URI has an invalid scheme: \"" + uri.ToString() + "\". Scheme must be \"crep\".");
+                
+                var split = uri.AbsolutePath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                if (!split.Any())
+                    throw new UriFormatException("This URI doesn't contain a repository name: \"" + uri.ToString() + "\". It must at least contain the repository's name.");
+
+                // Get database name and remove it from path
+                var splitStack = new Stack<string>(split.Reverse());
+                var dbName = splitStack.Pop();
+
+                // Rebuild to RavenDB http url
+                UriBuilder ub = new UriBuilder(uri);
+                ub.Path = "/" + string.Join("/", splitStack.Reverse());
+                ub.Scheme = "http";
+
+                // Load remote RavenDB
+                _store = new DocumentStore()
+                {
+                    Url = ub.Uri.ToString()
+                };
+                _store.Initialize();
+            }
+        }
+
         public class Package
         {
             public string Name { get; internal set; }
+
             public string Description { get; internal set; }
+
             public string Homepage { get; internal set; }
+
             public List<Person> Developers { get; internal set; }
+
             public List<Person> Maintainers { get; internal set; }
 
             public List<Version> Versions { get; internal set; }
-
             public class Version
             {
+                public string ID { get; internal set; }
+
                 public License License { get; internal set; }
-                public List<string> Platforms { get; internal set; }
-                public List<string> Distributions { get; internal set; }
-
-                public string InstallScriptId { get; internal set; }
-                public string UninstallScriptId { get; internal set; }
-                public string StartupScriptId { get; internal set; }
-
                 public class License
                 {
                     public string Name { get; set; }
                     public string Url { get; set; }
                     public string Text { get; set; }
                 }
+
+                public List<Condition> Conditions { get; internal set; }
+                public class Condition
+                {
+                    public ConditionType Type { get; internal set; }
+                    public enum ConditionType
+                    {
+                        Requires = 1,
+                        Recommends = 2,
+                        Suggests = 3,
+                        NotCompatibleWith = 4,
+                        //RequiresForInstallation = 5,
+                    }
+
+                    public string PackageName { get; internal set; }
+
+                    public List<VersionCondition> PackageVersions { get; internal set; }
+                    public class VersionCondition
+                    {
+                        public VersionConditionType ConditionType { get; internal set; }
+                        public enum VersionConditionType
+                        {
+                            Equal,
+                            Newer,
+                            NewerOrEqual,
+                            Older,
+                            OlderOrEqual,
+                            Not,
+                            Regex
+                        }
+
+                        public string Version { get; internal set; }
+                    }
+                }
+
+                public List<string> Platforms { get; internal set; }
+
+                public List<string> Distributions { get; internal set; }
+
+                public string InstallScript { get; internal set; }
+
+                public string UninstallScript { get; internal set; }
+
+                public string StartupScript { get; internal set; }
             }
+        }
+
+        public class InstalledPackage : Package
+        {
+            public string InstalledVersion { get; internal set; }
+        }
+
+        public class SearchResult
+        {
+            public CraftitudeClient Client { get; internal set; }
+
+            public Repository Repository { get; internal set; }
+
+            public Package OriginalPackage { get; internal set; }
+
+            public IEnumerable<Package.Version> FoundVersions { get; internal set; }
         }
 
         public class Person
         {
             public string RealName { get; internal set; }
+
             public string Nickname { get; internal set; }
+
             public string EMailAddress { get; internal set; }
+
             public List<string> Urls { get; internal set; }
+        }
+
+        public IEnumerable<InstalledPackage> GetInstalledPackages()
+        {
+            using (var session = Cache._store.OpenSession())
+            {
+                return session.Query<InstalledPackage>();
+            }
+        }
+
+        public IEnumerable<Package.Version> SearchPackageVersions(string name, params Package.Version.Condition.VersionCondition[] versionConditions)
+        {
+            return this.SearchPackageVersions(name, versionConditions.AsEnumerable());
+        }
+
+        public IEnumerable<Package.Version> SearchPackageVersions(string name, IEnumerable<Package.Version.Condition.VersionCondition> versionConditions)
+        {
+            return this.SearchPackageVersions(SearchPackagesByName(name).Single(), versionConditions);
+        }
+
+        public IEnumerable<Package.Version> SearchPackageVersions(Package package, params Package.Version.Condition.VersionCondition[] versionConditions)
+        {
+            return this.SearchPackageVersions(package, versionConditions.AsEnumerable());
+        }
+
+        public IEnumerable<Package.Version> SearchPackageVersions(Package package, IEnumerable<Package.Version.Condition.VersionCondition> versionConditions)
+        {
+            var versions = package.Versions;
+            foreach (var condition in versionConditions)
+            {
+                versions.RemoveAll(v =>
+                {
+                    bool r;
+                    switch (condition.ConditionType)
+                    {
+                        case Package.Version.Condition.VersionCondition.VersionConditionType.Equal:
+                            r = v.ID == condition.Version;
+                            break;
+                        case Package.Version.Condition.VersionCondition.VersionConditionType.Newer:
+                            r = versions.IndexOf(v) > versions.IndexOf(versions.Single(sv => sv.ID.Equals(condition.Version)));
+                            break;
+                        case Package.Version.Condition.VersionCondition.VersionConditionType.NewerOrEqual:
+                            r = versions.IndexOf(v) >= versions.IndexOf(versions.Single(sv => sv.ID.Equals(condition.Version)));
+                            break;
+                        case Package.Version.Condition.VersionCondition.VersionConditionType.Not:
+                            r = versions.IndexOf(v) != versions.IndexOf(versions.Single(sv => sv.ID.Equals(condition.Version)));
+                            break;
+                        case Package.Version.Condition.VersionCondition.VersionConditionType.Older:
+                            r = versions.IndexOf(v) < versions.IndexOf(versions.Single(sv => sv.ID.Equals(condition.Version)));
+                            break;
+                        case Package.Version.Condition.VersionCondition.VersionConditionType.OlderOrEqual:
+                            r = versions.IndexOf(v) <= versions.IndexOf(versions.Single(sv => sv.ID.Equals(condition.Version)));
+                            break;
+                        default: // regex
+                            r = Regex.IsMatch(
+                                v.ID,
+                                Regex.Escape(condition.Version).Replace(@"\*", ".*").Replace(@"\?", ".") // 1.* => 1\..*
+                            );
+                            break;
+                    }
+                    return !r;
+                });
+            }
+            return versions;
+        }
+
+        public IEnumerable<Package> SearchPackagesByName(string name)
+        {
+            foreach (var repo in Repositories)
+            {
+                using (var session = repo._store.OpenSession())
+                {
+                    var packages = session.Query<Package>()
+                        .Where(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                    foreach (var package in packages)
+                        yield return package;
+                }
+            }
+        }
+
+        public Dictionary<Package.Version.Condition.ConditionType, List<SearchResult>> SearchPackagesByConditions(params Package.Version.Condition[] conditions)
+        {
+            return SearchPackagesByConditions(conditions.AsEnumerable());
+        }
+
+        public Dictionary<Package.Version.Condition.ConditionType, List<SearchResult>> SearchPackagesByConditions(IEnumerable<Package.Version.Condition> conditions)
+        {
+            var ret = new Dictionary<Package.Version.Condition.ConditionType, List<SearchResult>>();
+
+            foreach (var repo in Repositories)
+            {
+                using (var session = repo._store.OpenSession())
+                {
+                    // Query all packages in this repo. Hopefully RavenDB caches
+                    // this properly. I think so.
+                    var packagesQueryAsync = session.Query<Package>().ToList();
+                    foreach (var condition in conditions)
+                    {
+                        // Create empty SearchResult list for yet non-existant condition output
+                        if (!ret.ContainsKey(condition.Type))
+                        {
+                            ret.Add(condition.Type, new List<SearchResult>());
+                        }
+
+                        // Get all versions by using whole package information
+                        var packagesForName = this.SearchPackagesByName(condition.PackageName);
+
+                        foreach (var package in packagesForName)
+                        {
+                            SearchResult res = new SearchResult();
+                            res.Client = this;
+                            res.Repository = repo;
+                            res.OriginalPackage = package;
+                            res.FoundVersions = new List<Package.Version>();
+
+                            // Go through all matching versions
+                            foreach (Package.Version version in SearchPackageVersions(package, condition.PackageVersions))
+                            {
+                                // Add this version to current condition
+                                ((List<Package.Version>)res.FoundVersions).Add(version);
+
+                                // Remove exactly this version in other conditions
+                                foreach (var c in ret.Keys.Where(k => !k.Equals(condition.Type)))
+                                    foreach (var r in ret[c])
+                                        ((List<Package.Version>)r.FoundVersions).RemoveAll(m => m == version);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return ret;
         }
     }
 }

@@ -28,6 +28,7 @@ if %errorlevel% neq 0 goto E_EXIT
 ::call init-svn https://yaml.svn.codeplex.com/svn/Main/Abstract/ dependencies/yaml/Abstract
 call init-git https://github.com/chkn/AluminumLua.git dependencies/aluminumlua
 call init-git https://github.com/apache/log4net.git dependencies/log4net
+call init-git https://github.com/SirCmpwn/Craft.Net.git dependencies/craft.net
 call init-nuget
 
 xecho /a:%col_ok% Finished.

@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Raven;
+using Raven.Abstractions;
+using Raven.Abstractions.Data;
 using Raven.Client;
 using Raven.Client.Extensions;
 using Raven.Client.Document;
@@ -36,7 +38,7 @@ namespace Craftitude
                 var existantDatabases = _store.DatabaseCommands.GetDatabaseNames(8);
 
                 if (!existantDatabases.Contains("installation"))
-                    _store.DatabaseCommands.CreateDatabase(new Raven.Abstractions.Data.DatabaseDocument()
+                    _store.DatabaseCommands.CreateDatabase(new DatabaseDocument()
                     {
                         Id = "installation",
                         Settings = {
@@ -49,13 +51,14 @@ namespace Craftitude
         public List<Repository> Repositories = new List<Repository>();
         public class Repository
         {
+            internal EmbeddableDocumentStore _cacheStore;
             internal DocumentStore _store;
 
-            public Repository(Uri uri)
+            public Repository(Uri uri, string cachePath)
             {
                 if (!uri.Scheme.Equals("crep", StringComparison.OrdinalIgnoreCase))
                     throw new UriFormatException("This URI has an invalid scheme: \"" + uri.ToString() + "\". Scheme must be \"crep\".");
-                
+
                 var split = uri.AbsolutePath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
                 if (!split.Any())
                     throw new UriFormatException("This URI doesn't contain a repository name: \"" + uri.ToString() + "\". It must at least contain the repository's name.");
@@ -75,6 +78,64 @@ namespace Craftitude
                     Url = ub.Uri.ToString()
                 };
                 _store.Initialize();
+
+                // Load local RavenDB (cache)
+                _cacheStore = new EmbeddableDocumentStore()
+                {
+                    DataDirectory = cachePath,
+                    DefaultDatabase = GetGuidForUri(uri).ToString()
+                };
+                _cacheStore.Initialize();
+
+                // Check if database for repository already exists
+                var existantDatabases = new string[32];
+                int position = 0;
+
+                while (existantDatabases.Count() == 32)
+                {
+                    existantDatabases = _cacheStore.DatabaseCommands.GetDatabaseNames(32, position);
+
+                    if (!existantDatabases.Contains(_cacheStore.DefaultDatabase))
+                        position += existantDatabases.Count();
+                }
+
+                // Create database for this repository if not existing
+                if (!existantDatabases.Contains(_cacheStore.DefaultDatabase))
+                {
+                    _cacheStore.DatabaseCommands.CreateDatabase(new DatabaseDocument()
+                    {
+                        Id = _cacheStore.DefaultDatabase,
+                        Settings = {
+                            { "Raven/ActiveBundles", "Compression" }
+                        }
+                    });
+                }
+            }
+
+            protected Guid GetGuidForUri(Uri uri)
+            {
+                return GetGuidForUri(uri.ToString());
+            }
+
+            protected Guid GetGuidForUri(string uri)
+            {
+                // A usable index name for RavenDB
+                var uriindex = BitConverter.ToString(Encoding.UTF8.GetBytes(uri)).Replace("-", "");
+
+                // Look if guid is already available for this uri
+                using (var session = _cacheStore.OpenSession("guidindex"))
+                {
+                    var q = session.Query<Guid>(uriindex);
+                    if (q.Any())
+                        return q.Single();
+                    else
+                    {
+                        var guid = new Guid();
+                        session.Store(guid, uriindex);
+                        session.SaveChanges();
+                        return guid;
+                    }
+                }
             }
         }
 
@@ -85,6 +146,8 @@ namespace Craftitude
             public string Description { get; internal set; }
 
             public string Homepage { get; internal set; }
+
+            public string Version { get; internal set; }
 
             public List<Person> Developers { get; internal set; }
 
@@ -149,8 +212,10 @@ namespace Craftitude
             }
         }
 
-        public class InstalledPackage : Package
+        public class InstalledPackage : LocalPackage
         {
+            public bool ManuallyInstalled { get; internal set; }
+
             public string InstalledVersion { get; internal set; }
         }
 
